@@ -22,7 +22,7 @@ chmod -R u+rwx ~/.local
 
 # --- Ordered list: "script|description|default"
 SCRIPTS=(
-    "swayInstall.sh|Install base system packages and tools|Y"
+    "DebianNiri.sh|Install base system packages and tools|Y"
 )
 
 
