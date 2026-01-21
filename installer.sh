@@ -20,6 +20,12 @@ SCRIPTS_DIR="$SCRIPT_DIR/scripts"
 # --- Ordered list: "script|description|default"
 SCRIPTS=(
     "DebianNiri.sh|Install base system packages and tools|Y"
+    "swayConfig.sh|Configure Sway window manager and related settings|Y"
+    "installFonts.sh|Install system fonts|Y"
+    "installVivaldi.sh|Install Vivaldi Browser|Y"
+    "updateConfig.sh|Copy and update .config|Y"
+    "AddUserToGroups.sh|Add your user to the needed groups|Y"
+    "DiscordAndTelegram.sh|Discord And Telegram Installer For Debian|Y"
 )
 
 
