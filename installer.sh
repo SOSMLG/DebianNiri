@@ -17,9 +17,6 @@ CYAN="\033[0m"
 # --- Directory setup ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS_DIR="$SCRIPT_DIR/scripts"
-#----Local-----
-chmod -R u+rwx ~/.local
-
 # --- Ordered list: "script|description|default"
 SCRIPTS=(
     "DebianNiri.sh|Install base system packages and tools|Y"
