@@ -83,7 +83,7 @@ apt install -y nautilus file-roller \
     tumbler ffmpegthumbnailer zenity  unar zip p7zip-full p7zip unzip \
     gvfs-backends gvfs-fuse smbclient lxpolkit geany geany-plugin-addons \
     geany-plugin-git-changebar geany-plugin-overview geany-plugin-spellcheck \
-    geany-plugin-treebrowser geany-plugin-vimode geany-plugin-markdown \
+    geany-plugin-treebrowser geany-plugin-vimode geany-plugin-markdown 
 success "File managers installed!"
 
 # Media Packages
