@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-#============================================================#
-#            Debian 13 Sway Full Setup Script               #
-#      Fully automatic, no prompts, ready for fresh system  #
-#============================================================#
+
 
 # Colors
 RED="\033[1;31m"       
@@ -82,12 +79,11 @@ success "Essentials utilities installed!"
 
 # File Managers
 info "Installing Thunar and archive tools..."
-apt install -y thunar thunar-volman thunar-archive-plugin xarchiver \
+apt install -y nautilus file-roller \
     tumbler ffmpegthumbnailer zenity  unar zip p7zip-full p7zip unzip \
     gvfs-backends gvfs-fuse smbclient lxpolkit geany geany-plugin-addons \
     geany-plugin-git-changebar geany-plugin-overview geany-plugin-spellcheck \
     geany-plugin-treebrowser geany-plugin-vimode geany-plugin-markdown \
-    slick-greeter
 success "File managers installed!"
 
 # Media Packages
