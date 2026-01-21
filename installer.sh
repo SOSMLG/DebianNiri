@@ -28,7 +28,7 @@ SCRIPTS=(
 
 # --- Header ---
 echo -e "${RED}=========================================="
-echo -e "      🔧 Install and configure Sway for Debian 13"
+echo -e "      🔧 Install and configure Niri for Debian 13"
 echo -e "==========================================${CYAN}\n"
 
 # --- Main loop ---
