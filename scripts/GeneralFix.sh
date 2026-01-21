@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # =======================================================
-# Debian 13 Gaming Setup for Niri + xwayland-satellite
+# Debian 13 Gaming & Wayland Setup (Minimal)
 # -------------------------------------------------------
-# Installs Steam, Heroic, and configures for Niri
+# Installs Steam, Heroic, and configures Wayland scaling
 # =======================================================
 
 if [ "$EUID" -ne 0 ]; then
@@ -29,7 +29,7 @@ log_warn() { echo -e "${YELLOW}[!]${RESET} $1"; }
 log_err() { echo -e "${RED}[✗]${RESET} $1"; }
 
 # Header
-echo -e "${BLUE}===== Debian 13 Gaming Setup for Niri =====${RESET}\n"
+echo -e "${BLUE}===== Debian 13 Gaming & General Setup =====${RESET}\n"
 log_info "Starting setup..."
 
 # Update
@@ -48,9 +48,7 @@ log_ok "32-bit enabled"
 log_info "Installing gaming dependencies..."
 PACKAGES=(
     "libvulkan1" "libvulkan1:i386"
-    "mesa-vulkan-drivers" "mesa-vulkan-drivers:i386"
-    "libgl1-mesa-dri" "libgl1-mesa-dri:i386"
-    "vulkan-tools" "mesa-utils"
+    "mesa-utils"
     "gamemode" "mangohud"
 )
 
@@ -111,40 +109,38 @@ SUDO_USER="${SUDO_USER:-$(whoami)}"
 USER_HOME=$(eval echo ~$SUDO_USER)
 log_info "Configuring for user: $SUDO_USER"
 
-# Environment variables for Niri
+# Environment variables
 ENV_FILE="$USER_HOME/.profile"
-if ! grep -q "Niri Gaming" "$ENV_FILE" 2>/dev/null; then
+if ! grep -q "Wayland Gaming" "$ENV_FILE" 2>/dev/null; then
     cat >> "$ENV_FILE" << 'EOF'
 
-# Niri Gaming Optimization
-export DISPLAY=:0
-export WAYLAND_DISPLAY=wayland-1
-export SDL_VIDEODRIVER=x11
-export GDK_BACKEND=x11
-export QT_QPA_PLATFORM=xcb
-export CLUTTER_BACKEND=x11
+# Wayland Gaming Optimization
+export GDK_SCALE=1 GDK_DPI_SCALE=1
+export QT_AUTO_SCREEN_SCALE_FACTOR=0 QT_SCALE_FACTOR=1
+export XWAYLAND_FORCE_SCALE=1 WAYLAND_DISPLAY=wayland-0
+export SDL_VIDEODRIVER=wayland MOZ_ENABLE_WAYLAND=1
 EOF
     log_ok "Environment variables added"
 else
     log_warn "Environment variables already configured"
 fi
 
-# Desktop launchers optimized for xwayland-satellite
+# Desktop launchers
 mkdir -p "$USER_HOME/.local/share/applications"
 
-cat > "$USER_HOME/.local/share/applications/steam-niri.desktop" << 'EOF'
+cat > "$USER_HOME/.local/share/applications/steam-opt.desktop" << 'EOF'
 [Desktop Entry]
-Name=Steam (Niri)
-Exec=env DISPLAY=:0 SDL_VIDEODRIVER=x11 steam
+Name=Steam (Optimized)
+Exec=env GDK_SCALE=1 QT_SCALE_FACTOR=1 XWAYLAND_FORCE_SCALE=1 steam
 Icon=steam
 Type=Application
 Categories=Game;
 EOF
 
-cat > "$USER_HOME/.local/share/applications/heroic-niri.desktop" << 'EOF'
+cat > "$USER_HOME/.local/share/applications/heroic-opt.desktop" << 'EOF'
 [Desktop Entry]
-Name=Heroic (Niri)
-Exec=env DISPLAY=:0 SDL_VIDEODRIVER=x11 heroic
+Name=Heroic (Optimized)
+Exec=env GDK_SCALE=1 QT_SCALE_FACTOR=1 XWAYLAND_FORCE_SCALE=1 heroic
 Icon=heroic
 Type=Application
 Categories=Game;
@@ -153,13 +149,9 @@ EOF
 chown -R "$SUDO_USER:$SUDO_USER" "$USER_HOME/.local/share/applications" "$USER_HOME/.profile"
 log_ok "Desktop shortcuts created"
 
-# Niri-specific notes
+# Completion
 echo
 log_ok "Setup complete!"
-log_info "Gaming environment configured for Niri with xwayland-satellite"
-log_info "Make sure xwayland-satellite is running before launching games"
-log_info "Steam and Heroic are configured to use X11 via xwayland-satellite"
-echo
-log_warn "Remember to start xwayland-satellite in your Niri config:"
-log_warn "  spawn-at-startup \"xwayland-satellite\""
+log_info "Gaming environment configured for Wayland"
+log_info "Steam and Heroic are ready to use"
 echo
