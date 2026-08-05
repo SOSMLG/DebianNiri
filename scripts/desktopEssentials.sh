@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# =======================================================
+# Desktop Essentials
+# -------------------------------------------------------
+# The "closest to Mint" completeness pass: a unified
+# software center, plug-and-play printing, a partition
+# tool, and a firewall control panel — all surfaced through
+# native KDE System Settings / Discover rather than bolted-
+# on GTK tools, matching the rest of this toolkit.
+# =======================================================
+set -uo pipefail
+
+RED="\033[0;31m"; GREEN="\033[0;32m"; YELLOW="\033[1;33m"; CYAN="\033[0;36m"; NC="\033[0m"
+
+log_info() { echo -e "${CYAN}[*]${NC} $1"; }
+log_ok()   { echo -e "${GREEN}[OK]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[!]${NC} $1"; }
+log_err()  { echo -e "${RED}[ERROR]${NC} $1"; }
+
+is_installed() {
+    dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "install ok installed"
+}
+
+ask() {
+    local prompt="$1" default="${2:-Y}" reply
+    local hint="(Y/n)"
+    [ "$default" = "N" ] && hint="(y/N)"
+    read -rp "$(echo -e "${YELLOW}${prompt} ${hint}: ${NC}")" reply
+    reply=${reply:-$default}
+    [[ "$reply" =~ ^[Yy]$ ]]
+}
+
+install_pkgs() {
+    local label="$1"; shift
+    local to_install=()
+    local pkg
+    for pkg in "$@"; do
+        is_installed "$pkg" || to_install+=("$pkg")
+    done
+    if [ "${#to_install[@]}" -eq 0 ]; then
+        log_ok "$label already installed."
+        return 0
+    fi
+    log_info "$label: installing ${to_install[*]}"
+    if sudo apt-get install -y "${to_install[@]}"; then
+        log_ok "$label installed."
+    else
+        log_warn "$label: some packages failed to install (continuing)."
+    fi
+}
+
+start_service() {
+    local svc="$1"
+    if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+        sudo systemctl enable --now "$svc" >/dev/null 2>&1 || true
+    else
+        sudo service "$svc" start >/dev/null 2>&1 || true
+    fi
+}
+
+ACTUAL_USER="${SUDO_USER:-$USER}"
+
+if [[ $EUID -eq 0 ]]; then
+    log_err "Do not run this as root."
+    exit 1
+fi
+
+echo -e "${CYAN}=========================================================${NC}"
+echo -e "${CYAN} Desktop Essentials${NC}"
+echo -e "${CYAN}=========================================================${NC}"
+
+log_info "Refreshing package lists..."
+sudo apt-get update || { log_err "apt-get update failed, aborting."; exit 1; }
+
+# ---------------------------------------------------------------------------
+# 1. Flatpak + Flathub + Discover's Flatpak backend — makes Discover a
+#    unified software center (apt + Flatpak) like Mint's Software Manager.
+# ---------------------------------------------------------------------------
+if ask "Set up Flatpak + Flathub + Discover integration?"; then
+    install_pkgs "Flatpak" flatpak plasma-discover-backend-flatpak
+
+    if command -v flatpak >/dev/null 2>&1; then
+        if sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo; then
+            log_ok "Flathub remote added system-wide."
+        else
+            log_warn "Could not add the Flathub remote (may already exist)."
+        fi
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# 2. Printing — CUPS + broad driver set + network printer auto-discovery
+# ---------------------------------------------------------------------------
+if ask "Install printing support (CUPS + drivers + network printer auto-discovery)?"; then
+    install_pkgs "Printing" cups cups-browsed printer-driver-all
+
+    if is_installed cups; then
+        start_service cups
+        log_ok "CUPS started."
+    fi
+
+    if getent group lpadmin >/dev/null 2>&1; then
+        if id -nG "$ACTUAL_USER" 2>/dev/null | tr ' ' '\n' | grep -qx lpadmin; then
+            log_ok "$ACTUAL_USER already in the lpadmin group."
+        elif sudo usermod -aG lpadmin "$ACTUAL_USER"; then
+            log_ok "Added $ACTUAL_USER to lpadmin (manage printers without a password prompt each time)."
+            log_warn "Log out and back in for this to take effect."
+        fi
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# 3. KDE Partition Manager
+# ---------------------------------------------------------------------------
+if ask "Install KDE Partition Manager?"; then
+    install_pkgs "Partition Manager" partitionmanager
+fi
+
+# ---------------------------------------------------------------------------
+# 4. Firewall control panel — installed only, NOT enabled/configured.
+#    Turning on default-deny-incoming automatically could silently break
+#    something you rely on (SSH into this machine, local file sharing,
+#    etc.), so that decision is left to you via System Settings.
+# ---------------------------------------------------------------------------
+if ask "Install firewall control panel (plasma-firewall, not enabled by default)?"; then
+    install_pkgs "Firewall" plasma-firewall ufw
+    log_warn "Installed only — ufw is NOT enabled. Turn it on yourself via System Settings > Firewall"
+    log_warn "(or 'sudo ufw enable') once you've confirmed it won't block anything you rely on."
+fi
+
+echo -e "${GREEN}Desktop essentials step complete.${NC}"
