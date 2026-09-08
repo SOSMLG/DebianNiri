@@ -87,11 +87,44 @@ if ask "Install qBittorrent (torrent client)?" "N"; then
 fi
 
 if ask "Install TLP (laptop battery/power management)?" "N"; then
-    install_pkgs "TLP" tlp
+    # power-profiles-daemon and TLP both try to manage the same knobs
+    # (CPU governor, PCIe ASPM, etc.) — running both fights itself and
+    # is a well-known source of "my settings keep reverting" reports.
+    if is_installed power-profiles-daemon; then
+        log_info "power-profiles-daemon conflicts with TLP — removing it first."
+        sudo systemctl disable --now power-profiles-daemon 2>/dev/null || true
+        sudo apt-get purge -y power-profiles-daemon 2>/dev/null || log_warn "Couldn't remove power-profiles-daemon — TLP may fight it for control."
+    fi
+
+    install_pkgs "TLP" tlp tlp-rdw
     if is_installed tlp; then
         sudo systemctl enable --now tlp 2>/dev/null \
             || sudo service tlp start 2>/dev/null \
             || log_warn "Could not start tlp service automatically — check your init system (systemd vs sysvinit/openrc on Devuan)."
+        log_ok "TLP installed and running. Check status any time with: sudo tlp-stat -s"
+
+        # Charge thresholds only exist on hardware that exposes them
+        # (ThinkPads via the in-kernel thinkpad_acpi driver, and some
+        # others) — check rather than assume, and don't silently pick
+        # a number for someone's battery.
+        BAT_PATH=$(find /sys/class/power_supply -maxdepth 1 -iname 'BAT*' -print -quit 2>/dev/null)
+        if [ -n "$BAT_PATH" ] && [ -f "${BAT_PATH}/charge_control_end_threshold" ]; then
+            BAT_NAME=$(basename "$BAT_PATH")
+            log_info "Charge-threshold support detected on ${BAT_NAME} (common on ThinkPads)."
+            if ask "Cap charging at 80% to slow long-term battery wear (common ThinkPad recommendation)?" "N"; then
+                sudo mkdir -p /etc/tlp.d
+                sudo tee /etc/tlp.d/60-battery-threshold.conf > /dev/null << EOF
+# Written by usefulApps.sh — charge threshold for ${BAT_NAME}.
+# Full-charge fans of 100% can delete this file and run: sudo tlp start
+START_CHARGE_THRESH_BAT0=75
+STOP_CHARGE_THRESH_BAT0=80
+EOF
+                sudo tlp start >/dev/null 2>&1 || true
+                log_ok "Charge capped at 80% (resumes below 75%). Edit /etc/tlp.d/60-battery-threshold.conf to change it."
+            fi
+        else
+            log_info "No charge-threshold sysfs entry found on this machine — nothing to configure, not an error."
+        fi
     fi
 fi
 

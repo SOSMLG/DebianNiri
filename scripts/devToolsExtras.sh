@@ -79,7 +79,7 @@ if ask "Install Neovim + a minimal lazy.nvim starter config (LSP, Treesitter, Te
     else
         mkdir -p "$NVIM_CONFIG/lua"
         cat > "$NVIM_CONFIG/init.lua" << 'EOF'
--- Minimal starter config installed by devuan-cinnamon-setup's devToolsExtras.sh.
+-- Minimal starter config installed by devuan-kde-setup's devToolsExtras.sh.
 -- Uses lazy.nvim (needs Neovim >= 0.8.0) rather than a full "distro" like
 -- LazyVim/kickstart.nvim, both of which currently require a newer Neovim
 -- than Debian ships. Edit freely — this is a starting point, not a framework

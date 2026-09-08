@@ -76,67 +76,60 @@ for CANDIDATE in "$HOME/.opencode/bin" "$HOME/bin"; do
 done
 
 # ---------------------------------------------------------------------------
-# Hotkey: Super+A -> open a terminal running opencode (installs-then-runs
-# check happens implicitly since we only reach here after the install step
-# above; if you skipped installing, the binding just won't find the command).
+# Hotkey: Super+A -> open a terminal running opencode.
+#
+# KDE's global shortcuts are NOT gsettings/dconf (that's Cinnamon/GNOME) —
+# they're kglobalaccel, driven by ~/.config/kglobalshortcutsrc plus a
+# matching .desktop launcher. This is the same mechanism System Settings'
+# own Shortcuts > "Add Command..." button uses under the hood (verified
+# against https://github.com/nix-community/plasma-manager/issues/18 and a
+# second independent write-up, both showing the identical file format):
+#
+#   ~/.local/share/applications/<name>.desktop:
+#     [Desktop Entry]
+#     Exec=<command>
+#     Name=<name>
+#     NoDisplay=true
+#     StartupNotify=false
+#     Type=Application
+#     X-KDE-GlobalAccel-CommandShortcut=true
+#
+#   ~/.config/kglobalshortcutsrc:
+#     [<name>.desktop]
+#     _k_friendly_name=<name>
+#     _launch=<key-sequence>,none,<name>
+#
+# kglobalaccel reads this at login, not live — like this toolkit's other
+# KDE config writes (KRunner centering, etc.), this takes effect at your
+# next login, not immediately.
 # ---------------------------------------------------------------------------
-if command_exists gsettings && ask "Bind Super+A to launch OpenCode in a terminal?"; then
-    if command_exists python3; then
-        MERGE_SCRIPT=$(mktemp --suffix=.py)
-        cat > "$MERGE_SCRIPT" << 'PYEOF'
-import subprocess, ast
-base_schema = "org.cinnamon.desktop.keybindings"
-prefix = "/org/cinnamon/desktop/keybindings/custom-keybindings"
+if [ -n "$KWRITECONFIG" ] && ask "Bind Super+A to launch OpenCode in a terminal?"; then
+    DESKTOP_NAME="opencode-shortcut"
+    APPS_DIR="$HOME/.local/share/applications"
+    mkdir -p "$APPS_DIR"
 
-def gget(schema, key):
-    out = subprocess.run(["gsettings", "get", schema, key], capture_output=True, text=True)
-    return out.stdout.strip()
+    cat > "$APPS_DIR/${DESKTOP_NAME}.desktop" << EOF
+[Desktop Entry]
+Exec=x-terminal-emulator -e opencode
+Name=OpenCode AI
+NoDisplay=true
+StartupNotify=false
+Type=Application
+X-KDE-GlobalAccel-CommandShortcut=true
+EOF
 
-def gset(schema, key, value):
-    subprocess.run(["gsettings", "set", schema, key, value], check=False)
+    kwrite_user --file kglobalshortcutsrc --group "${DESKTOP_NAME}.desktop" \
+        --key "_k_friendly_name" "OpenCode AI"
+    kwrite_user --file kglobalshortcutsrc --group "${DESKTOP_NAME}.desktop" \
+        --key "_launch" "Meta+A,none,OpenCode AI"
 
-raw = gget(base_schema, "custom-list")
-try:
-    current = ast.literal_eval(raw) if raw else []
-    if not isinstance(current, list):
-        current = []
-except Exception:
-    current = []
-
-existing_names = {}
-for slot in current:
-    path = f"{prefix}/{slot}/"
-    name = gget(f"{base_schema}.custom-keybinding:{path}", "name").strip("'")
-    existing_names[name] = slot
-
-name, cmd, key = "OpenCode AI", "x-terminal-emulator -e opencode", "<Super>a"
-if name in existing_names:
-    slot = existing_names[name]
-else:
-    i = 0
-    used = set(current)
-    while f"custom{i}" in used:
-        i += 1
-    slot = f"custom{i}"
-    current.append(slot)
-
-path = f"{prefix}/{slot}/"
-gset(f"{base_schema}.custom-keybinding:{path}", "name", f"'{name}'")
-gset(f"{base_schema}.custom-keybinding:{path}", "command", f"'{cmd}'")
-gset(f"{base_schema}.custom-keybinding:{path}", "binding", f"['{key}']")
-gset(base_schema, "custom-list", str(current).replace('"', "'"))
-print("OK")
-PYEOF
-        if run_as_user python3 "$MERGE_SCRIPT" | grep -q OK; then
-            log_ok "Super+A now opens OpenCode in a terminal."
-        else
-            log_warn "Could not set the keybinding automatically — bind it yourself in"
-            log_warn "Cinnamon Settings > Keyboard > Shortcuts > Custom, command: x-terminal-emulator -e opencode"
-        fi
-        rm -f "$MERGE_SCRIPT"
-    fi
+    log_ok "Super+A will launch OpenCode in a terminal — takes effect at your next login"
+    log_ok "(kglobalaccel reads shortcuts at session start, not live)."
+    log_info "Already bound to something else? Reassign it yourself in System Settings > Shortcuts >"
+    log_info "search 'OpenCode AI', or edit ~/.config/kglobalshortcutsrc directly."
 else
-    log_info "No active Cinnamon session detected (or you skipped) — bind Super+A manually later if you want it."
+    log_info "Skipped the hotkey — bind it manually later via System Settings > Shortcuts > Add Command"
+    log_info "(command: x-terminal-emulator -e opencode) if you want it."
 fi
 
 # ---------------------------------------------------------------------------
@@ -146,8 +139,8 @@ fi
 # depending on version; this drops a plain, tool-agnostic markdown file
 # in both common locations so whichever one you use picks it up.
 # ---------------------------------------------------------------------------
-if ask "Install a system 'skill' file so AI tools know this is a Devuan/OpenRC/Cinnamon box?"; then
-    SKILL_SRC="$SCRIPT_DIR/../skills/devuan-cinnamon-SKILL.md"
+if ask "Install a system 'skill' file so AI tools know this is a Devuan/KDE Plasma box?"; then
+    SKILL_SRC="$SCRIPT_DIR/../skills/devuan-kde-SKILL.md"
     if [ -f "$SKILL_SRC" ]; then
         mkdir -p "$HOME/.config/opencode"
         cp "$SKILL_SRC" "$HOME/.config/opencode/AGENTS.md" 2>/dev/null \

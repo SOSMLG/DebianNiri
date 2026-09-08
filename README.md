@@ -13,29 +13,106 @@ a heavyweight installer.
 Structure follows the same "ordered runner + flat scripts/ dir" pattern as
 the DebianSway repo this was modeled after.
 
+## Fixes + additions in this pass
+
+**Two real bugs fixed, not just new features:**
+
+- **`aiOpencode.sh` and `devToolsExtras.sh` were both completely broken.**
+  Both `source "$SCRIPT_DIR/../lib/common.sh"` — a file that never
+  actually existed in this repo, so both exited immediately on that line
+  before doing anything. `scripts/lib/common.sh` now exists.
+- **`aiOpencode.sh`'s Super+A hotkey didn't work on KDE at all.** It used
+  `gsettings`/`org.cinnamon.desktop.keybindings` — that's Cinnamon's
+  config system (GNOME/dconf-based), not KDE's. Plasma doesn't read
+  dconf for its own shortcuts, so the binding silently did nothing. A few
+  other leftover "Cinnamon"/"OpenRC" references (and a missing skill file
+  it pointed at) suggest this script was adapted from a sibling
+  Cinnamon-based toolkit and not fully re-targeted. It's now wired
+  through kglobalaccel — the real mechanism, verified against two
+  independent write-ups of what System Settings' own "Add Command..."
+  button does under the hood (a `.desktop` launcher with
+  `X-KDE-GlobalAccel-CommandShortcut=true`, referenced from
+  `~/.config/kglobalshortcutsrc`). `scripts/skills/devuan-kde-SKILL.md`
+  (also previously missing) now exists too, describing this system
+  accurately instead of as a Cinnamon box.
+- A stray duplicate `AddUserToGroups.sh` (an earlier, worse draft —
+  no shebang, no root check, no idempotency check) sat alongside the
+  real `addUserToGroups.sh` and has been removed.
+
+**New: a Catppuccin visual identity end-to-end, matching this toolkit's
+XFCE sibling project — Mocha flavour, Red accent (a black chassis, red
+TrackPoint nub, if you're on a ThinkPad):**
+
+- **`catppuccinPlasma.sh`** — the official
+  [catppuccin/kde](https://github.com/catppuccin/kde) Global Theme
+  (prebuilt/pre-rendered by their own CI, unlike Darkly there's no
+  compile step), [ljmill/catppuccin-icons](https://github.com/ljmill/catppuccin-icons)
+  (the same `Catppuccin-SE` set as the XFCE sibling, with the same
+  memory-optimized `Catppuccin-SE-Local` build — see that project's
+  notes on why), and a self-authored "Catppuccin Red" Konsole profile
+  using the official Catppuccin terminal ANSI mapping. **This sets the
+  same things `fancyPlasma.sh` sets** (style/colors/window decoration) —
+  they're alternatives, not additive, so `fancyPlasma.sh`'s default
+  flipped from `Y` to `N` here; whichever you run *last* is what's active.
+- **`bootThemeSetup.sh`** — carries the theme to Plymouth (boot splash)
+  and GRUB (same as the XFCE sibling, both DE-agnostic), plus the SDDM
+  login screen via [catppuccin/sddm](https://github.com/catppuccin/sddm)
+  (XFCE's equivalent used LightDM; this uses SDDM, KDE's actual display
+  manager). Same invasiveness disclaimer as the XFCE version: it's the
+  only script here touching `/etc/default/grub` and the initramfs, every
+  edit is backed up, and it checks for GRUB/SDDM before touching either.
+- **`bluetoothSetup.sh`** — bluez, Bluedevil (KDE's native applet — no
+  Blueman, that would just be two tray icons fighting over one adapter),
+  and the part that actually trips people up: Bluetooth *audio*
+  specifically, detecting PipeWire vs PulseAudio rather than installing
+  both blind, so A2DP stereo (not just pairing) works for headsets/earbuds.
+
+**Enhanced, not new:**
+
+- **`usefulApps.sh`'s TLP option** now removes `power-profiles-daemon`
+  first (the two fight over the same power knobs if both run) and offers
+  an 80%-charge-cap on hardware that actually exposes the sysfs threshold
+  — same logic as the XFCE sibling's `hardwareSupport.sh`.
+- **`desktopEssentials.sh`** gained a `packagekit` install — without it,
+  Discover has no way to see (or notify about) apt updates at all, so
+  the panel's update notification silently never fires. Also: enabling
+  the firewall is now a real option (SSH-safe deny-incoming, same guard
+  logic as the XFCE sibling) instead of a permanent "install only, turn
+  it on yourself" — still opt-in, still off by default, just no longer a
+  dead end if you do want it on.
+
+## Structure
+
 ```
 devuan-kde-setup/
 ├── run.sh                        # main entry point — run this
 ├── scripts/
 │   ├── addUserToGroups.sh        # input/video/render groups
 │   ├── kdeDebloat.sh             # remove games/edu/PIM bloat, Kate/Konqueror/Dragon Player, disable Baloo
+│   ├── catppuccinPlasma.sh       # Catppuccin (Mocha, Red) Global Theme, icons, Konsole profile
+│   ├── bootThemeSetup.sh         # Plymouth splash + GRUB theme + SDDM login screen (boot → login)
 │   ├── touchpadTrackpointFix.sh  # usbhid mousepoll fix + optional libinput tuning
 │   ├── hardwareSupport.sh        # WiFi/BT firmware, CPU microcode, fwupd firmware updates
+│   ├── bluetoothSetup.sh         # bluez, Bluedevil, and Bluetooth audio (PipeWire/PulseAudio) bridging
 │   ├── multimediaCodecs.sh       # ffmpeg/GStreamer codecs + DVD playback
 │   ├── firefoxHarden.sh          # installs + hardens firefox-esr (Betterfox)
 │   ├── policies.json             # firefox enterprise policy used by the above
 │   ├── installFonts.sh           # Noto, Font Awesome, JetBrainsMono Nerd Font
 │   ├── terminalButterbash.sh     # installs bundled ButterBash
 │   ├── fastfetchConfig.sh        # fastfetch + curated config presets
-│   ├── usefulApps.sh             # VLC + small completeness packages
-│   ├── desktopEssentials.sh      # Flatpak/Discover, printing, Partition Manager, firewall panel
-│   ├── fancyPlasma.sh            # ★ Darkly theme, Blur + Magic Lamp, centered KRunner, glass Konsole, panel cleanup
+│   ├── usefulApps.sh             # VLC, TLP (+ ThinkPad battery thresholds), small completeness packages
+│   ├── desktopEssentials.sh      # Flatpak/Discover, PackageKit, printing, Partition Manager, firewall panel
+│   ├── fancyPlasma.sh            # ★ (alternative look) Darkly, Blur + Magic Lamp, centered KRunner, glass Konsole
 │   ├── timeshiftSetup.sh         # Timeshift system snapshot/restore tool
 │   ├── installPhotogimp.sh       # (optional) GIMP + PhotoGIMP layout/theme, fetched live from GitHub
 │   ├── installVscodium.sh        # (optional) VSCodium via official APT repo
 │   ├── vscodiumDevSetup.sh       # (optional) VSCodium C++/Python dev environment
+│   ├── aiOpencode.sh             # OpenCode AI agent + Super+A hotkey + system skill file
+│   ├── devToolsExtras.sh         # (optional) btop, eza, bat, zoxide, Neovim+lazy.nvim, KeePassXC
 │   ├── gamingSetup.sh            # (optional) Heroic Games Launcher / Steam / Wine
-│   └── vesktopTelegram.sh        # (optional) Vesktop (Discord client) / Telegram
+│   ├── vesktopTelegram.sh        # (optional) Vesktop (Discord client) / Telegram
+│   ├── lib/common.sh             # shared helpers sourced by aiOpencode.sh / devToolsExtras.sh only
+│   └── skills/devuan-kde-SKILL.md # system context file for AI coding agents (OpenCode/Claude Code)
 ├── butterbash/                   # bundled copy of butterbash-main, used offline
 └── README.md
 ```
@@ -89,6 +166,24 @@ Gwenview, Ark, System Settings, SDDM, etc. are never touched.
 Every category is its own y/N prompt, so you can keep the games or the
 PIM suite if you actually use them.
 
+**catppuccinPlasma.sh** — an alternative to fancyPlasma.sh below. Installs
+the official [catppuccin/kde](https://github.com/catppuccin/kde) Global
+Theme (Mocha flavour, Red accent, Classic window decoration — no compile
+step, unlike Darkly, since Catppuccin ships pre-rendered), the same
+`Catppuccin-SE`/`Catppuccin-SE-Local` icon pipeline as this toolkit's XFCE
+sibling project, and a self-authored "Catppuccin Red" Konsole profile.
+**This sets the same things fancyPlasma.sh does** — run whichever one you
+want *last*; that's the one that stays active. Re-run it after installing
+new apps to refresh the icon set.
+
+**bootThemeSetup.sh** — the part before you reach Plasma at all: a
+Catppuccin Plymouth boot splash, a Catppuccin GRUB menu theme, and the
+Catppuccin SDDM login screen. The most invasive script in the toolkit —
+it's the only one touching `/etc/default/grub` and rebuilding the
+initramfs — so every file it edits is backed up first, and it checks
+GRUB/SDDM are actually present before touching either rather than
+assuming a particular boot setup.
+
 **touchpadTrackpointFix.sh** — applies the fix from your `touchpadfix` note:
 
 ```
@@ -118,6 +213,14 @@ actual driver bug:
 - `fwupd` for BIOS/UEFI and peripheral firmware updates via LVFS, plus
   `plasma-discover-backend-fwupd` so updates show up right in Discover —
   the closest KDE-native equivalent to Mint's Driver Manager.
+
+**bluetoothSetup.sh** — the layer on top of the firmware blob above: the
+actual bluez stack, Bluedevil (KDE's own applet — no Blueman, that's the
+GTK-desktop equivalent and would just add a second tray icon fighting for
+the same adapter), and Bluetooth *audio* specifically. Detects PipeWire
+vs PulseAudio rather than installing both blind, since that's the part
+that actually trips people up: pairing succeeds, but A2DP stereo silently
+doesn't work because the audio server has no Bluetooth module loaded.
 
 **multimediaCodecs.sh** — the single most common "why doesn't this just
 work like Mint" complaint: MP3s, H.264/H.265 video, and DVDs don't play
@@ -161,18 +264,27 @@ is set as the default — swap any time with
 
 **usefulApps.sh** — VLC, archive format support for Ark (7z/rar), Dolphin
 thumbnailers for media/RAW photos, and optionally qBittorrent and TLP
-(laptop power management) if you want them. Also closes a small gap this
-toolkit itself would otherwise leave open: if `kdeDebloat.sh` removed
-Dragon Player/Elisa earlier, video/audio MIME defaults would otherwise
-keep pointing at a now-uninstalled app. Installing VLC here also points
-common video/audio types at it via `xdg-mime`, so double-clicking a video
-doesn't hit a dead reference.
+(laptop power management) if you want them. TLP now also removes
+`power-profiles-daemon` first if present (the two fight over the same
+power knobs — CPU governor, PCIe ASPM — if both run), and on hardware
+that actually exposes a charge-threshold sysfs entry (ThinkPads via
+`thinkpad_acpi`, and some others), offers to cap charging at 80% for
+long-term battery health. Also closes a small gap this toolkit itself
+would otherwise leave open: if `kdeDebloat.sh` removed Dragon Player/
+Elisa earlier, video/audio MIME defaults would otherwise keep pointing
+at a now-uninstalled app. Installing VLC here also points common video/
+audio types at it via `xdg-mime`, so double-clicking a video doesn't hit
+a dead reference.
 
 **desktopEssentials.sh** — the "closest to Mint" completeness pass, each
 part its own y/N prompt:
 - **Flatpak + Flathub**, plus `plasma-discover-backend-flatpak` — turns
   Discover into a unified software center covering both `apt` and
   Flatpak, similar to Mint's Software Manager.
+- **PackageKit** — without this, Discover has literally no way to see or
+  notify about pending `apt` updates, so the panel's update notification
+  (the closest thing Devuan/Debian has to Mint's Update Manager icon)
+  silently never fires no matter how long you wait.
 - **Printing** — CUPS, `cups-browsed` for automatic network/IPP printer
   discovery, and `printer-driver-all` (Debian's broad driver metapackage,
   covering most brands without needing to guess which one you have).
@@ -180,21 +292,21 @@ part its own y/N prompt:
   manage printers from System Settings without a password prompt every
   time.
 - **KDE Partition Manager** (`partitionmanager`).
-- **Firewall control panel** (`plasma-firewall` + `ufw`) — installed
-  only, deliberately **not enabled**. Flipping on default-deny-incoming
-  automatically could silently break something you rely on (SSH into
-  this machine, local file sharing), so that's left as a decision you
-  make yourself in System Settings > Firewall once you've confirmed it's
-  safe to.
+- **Firewall control panel** (`plasma-firewall` + `ufw`) — installed by
+  default; *enabling* it is a separate, still-opt-in-and-off-by-default
+  prompt, with an SSH-safe guard (checks for an active SSH session or a
+  listening sshd and allows port 22 through *before* flipping to
+  default-deny, so this can't lock you out of your own box over SSH).
 
-**fancyPlasma.sh** ★ — the theming pass pulled from a "make KDE look
-modern" YouTube walkthrough (Darkly + Ant Dark, blur, rounded corners,
-a floating titlebar, centered KRunner, a cleaner panel, a glass
-Konsole). Split honestly between what's genuinely scriptable and what
-isn't, same bar as everything else in this toolkit — a wrong KWin/
-kdeglobals config key doesn't error, it just silently writes an unused
-key and nothing visibly changes, so nothing here was guessed without a
-source:
+**fancyPlasma.sh** ★ *(alternative look — defaults to N since
+catppuccinPlasma.sh above sets the same things and is now the default)* —
+the theming pass pulled from a "make KDE look modern" YouTube walkthrough
+(Darkly + Ant Dark, blur, rounded corners, a floating titlebar, centered
+KRunner, a cleaner panel, a glass Konsole). Split honestly between what's
+genuinely scriptable and what isn't, same bar as everything else in this
+toolkit — a wrong KWin/kdeglobals config key doesn't error, it just
+silently writes an unused key and nothing visibly changes, so nothing
+here was guessed without a source:
 
 - **Darkly** (application style + color scheme + window decoration) —
   built from [Bali10050/Darkly](https://github.com/Bali10050/Darkly)
@@ -342,7 +454,23 @@ apply them. If Steam or Heroic look blurry/mis-scaled under Plasma
 Wayland, that's worth a dedicated look rather than a blanket env-var
 hack — ask and I'll put together something KDE-specific.
 
+**aiOpencode.sh** — installs the [OpenCode](https://opencode.ai) AI
+coding agent, binds Super+A to launch it in a terminal, and drops a
+system "skill" file so AI tools (this one, Claude Code, etc.) know
+they're on a Devuan/KDE box rather than guessing. The hotkey goes
+through kglobalaccel — a `.desktop` launcher with
+`X-KDE-GlobalAccel-CommandShortcut=true`, referenced from
+`~/.config/kglobalshortcutsrc` — the same mechanism System Settings'
+own Shortcuts > "Add Command..." uses internally. Like this toolkit's
+other KDE config writes, it takes effect at your next login, not live.
+
+**devToolsExtras.sh** *(optional, defaults to skip)* — a curated grab
+bag: btop, eza, bat, a zoxide presence check, Neovim + lazy.nvim with a
+minimal starter config, and KeePassXC.
+
 **vesktopTelegram.sh** *(optional, defaults to skip — asks per-app)*:
+
+
 - **Vesktop** — Vencord's standalone Discord client (better Linux/Wayland
   support, screen-share, built-in Vencord mods), installed from its
   *latest* GitHub release `.deb` via the GitHub API — not pinned to

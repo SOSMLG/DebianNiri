@@ -89,6 +89,19 @@ if ask "Set up Flatpak + Flathub + Discover integration?"; then
 fi
 
 # ---------------------------------------------------------------------------
+# 1b. PackageKit — the piece Discover actually needs to see (and notify
+#     about) apt updates at all. Without it, Discover can browse Flatpak
+#     fine but has nothing wired up for the base system's own packages,
+#     so the "updates available" panel notification never fires — the
+#     closest thing Devuan/Debian has to Mint's Update Manager icon.
+# ---------------------------------------------------------------------------
+if ask "Install PackageKit (lets Discover see + notify about apt updates)?"; then
+    install_pkgs "PackageKit" packagekit
+    log_ok "Discover will now show a panel notification when apt updates are available."
+    log_info "First check can take a minute — PackageKit builds its own package cache on first run."
+fi
+
+# ---------------------------------------------------------------------------
 # 2. Printing — CUPS + broad driver set + network printer auto-discovery
 # ---------------------------------------------------------------------------
 if ask "Install printing support (CUPS + drivers + network printer auto-discovery)?"; then
@@ -117,15 +130,38 @@ if ask "Install KDE Partition Manager?"; then
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Firewall control panel — installed only, NOT enabled/configured.
-#    Turning on default-deny-incoming automatically could silently break
-#    something you rely on (SSH into this machine, local file sharing,
-#    etc.), so that decision is left to you via System Settings.
+# 4. Firewall control panel. Installed by default; enabling is a separate,
+#    explicit opt-in with an SSH-safe guard, since flipping on
+#    default-deny-incoming blind could silently break something you rely
+#    on (SSH into this machine, local file sharing).
 # ---------------------------------------------------------------------------
-if ask "Install firewall control panel (plasma-firewall, not enabled by default)?"; then
+if ask "Install firewall control panel (plasma-firewall + ufw)?"; then
     install_pkgs "Firewall" plasma-firewall ufw
-    log_warn "Installed only — ufw is NOT enabled. Turn it on yourself via System Settings > Firewall"
-    log_warn "(or 'sudo ufw enable') once you've confirmed it won't block anything you rely on."
+
+    if is_installed ufw && ask "Also enable it now (deny-incoming/allow-outgoing baseline, SSH-safe)?" "N"; then
+        NEEDS_SSH_RULE=0
+        if [ -n "${SSH_CONNECTION:-}${SSH_TTY:-}" ]; then
+            NEEDS_SSH_RULE=1
+        elif command -v ss >/dev/null 2>&1 && ss -tln 2>/dev/null | grep -qE ':22\b'; then
+            NEEDS_SSH_RULE=1
+        fi
+        if [ "$NEEDS_SSH_RULE" -eq 1 ]; then
+            log_info "Active SSH session or listening sshd detected — allowing SSH before enabling default-deny."
+            sudo ufw allow ssh comment 'preserve SSH access before enabling default-deny' \
+                || log_warn "Couldn't add the SSH allow-rule — double-check before enabling ufw if you're on SSH."
+        fi
+        sudo ufw default deny incoming
+        sudo ufw default allow outgoing
+        if sudo ufw --force enable; then
+            log_ok "ufw enabled: incoming denied by default, outgoing allowed. Manage exceptions via System"
+            log_ok "Settings > Firewall or 'sudo ufw allow <port>'."
+        else
+            log_warn "ufw failed to enable — check 'sudo ufw status verbose'."
+        fi
+    else
+        log_warn "Installed only — ufw is NOT enabled. Turn it on yourself via System Settings > Firewall"
+        log_warn "(or 'sudo ufw enable') once you've confirmed it won't block anything you rely on."
+    fi
 fi
 
 echo -e "${GREEN}Desktop essentials step complete.${NC}"
