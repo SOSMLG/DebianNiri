@@ -157,7 +157,7 @@
 
 ### Functions
 
-For note-taking and todo management, use [ButterNotes](https://codeberg.org/justaguylinux/butternotes)
+For note-taking and todo management, use [ButterNotes](https://justaguy.dev/drew/butternotes)
 
 #### Utility Functions
 
@@ -258,7 +258,7 @@ Edit individual files in `~/.config/bash/functions/`
 ## Project Info
 
 - **Author**: JustAGuyLinux (YouTube)
-- **Repository**: https://codeberg.org/justaguylinux/butterbash
+- **Repository**: https://justaguy.dev/drew/butterbash
 - **License**: MIT
 
 ## Technical Details

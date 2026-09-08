@@ -1,9 +1,9 @@
 # 🧈 ButterBash
 ![Made for Debian](https://img.shields.io/badge/Made%20for-Debian-A81D33?style=for-the-badge&logo=debian&logoColor=white)
 ![Bash](https://img.shields.io/badge/Shell-Bash-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white)
-![Stars](https://img.shields.io/gitea/stars/justaguylinux/butterbash?gitea_url=https://codeberg.org&style=for-the-badge&logo=codeberg&logoColor=white&color=yellow&label=Stars)
-![Forks](https://img.shields.io/gitea/forks/justaguylinux/butterbash?gitea_url=https://codeberg.org&style=for-the-badge&logo=codeberg&logoColor=white&color=blue&label=Forks)
-![Last Commit](https://img.shields.io/gitea/last-commit/justaguylinux/butterbash?gitea_url=https://codeberg.org&style=for-the-badge&logo=codeberg&logoColor=white&color=green&label=Last%20Commit)
+![Stars](https://img.shields.io/gitea/stars/drew/butterbash?gitea_url=https://justaguy.dev&style=for-the-badge&logo=forgejo&logoColor=white&color=yellow&label=Stars)
+![Forks](https://img.shields.io/gitea/forks/drew/butterbash?gitea_url=https://justaguy.dev&style=for-the-badge&logo=forgejo&logoColor=white&color=blue&label=Forks)
+![Last Commit](https://img.shields.io/gitea/last-commit/drew/butterbash?gitea_url=https://justaguy.dev&style=for-the-badge&logo=forgejo&logoColor=white&color=green&label=Last%20Commit)
 
 A smooth, modular Bash configuration framework that makes your shell experience butter-smooth.
 
@@ -15,17 +15,17 @@ A smooth, modular Bash configuration framework that makes your shell experience 
 - **Extensive Aliases**: Productivity shortcuts for common tasks
 - **Archive Extraction**: Universal `extract` command for all archive types
 - **System Functions**: Quick system info, colored man pages, and more
-- **Extension Ready**: Works perfectly with [ButterNotes](https://codeberg.org/justaguylinux/butternotes) for note-taking and todo management
+- **Extension Ready**: Works perfectly with [ButterNotes](https://justaguy.dev/drew/butternotes) for note-taking and todo management
 
 ## 📦 Installation
 
 ### Recommended: Install via ButterScripts
 
-The easiest way to install ButterBash is through the [ButterScripts](https://codeberg.org/justaguylinux/butterscripts) optional installer:
+The easiest way to install ButterBash is through the [ButterScripts](https://justaguy.dev/drew/butterscripts) optional installer:
 
 ```bash
 # Clone and run butterscripts installer
-git clone https://codeberg.org/justaguylinux/butterscripts.git
+git clone https://justaguy.dev/drew/butterscripts.git
 cd butterscripts/setup
 ./optional_tools.sh
 # Select option 1: ButterBash ⭐
@@ -37,7 +37,7 @@ ButterBash is featured as the top option in ButterScripts' optional tools, provi
 
 1. Clone the repository:
 ```bash
-git clone https://codeberg.org/justaguylinux/butterbash.git
+git clone https://justaguy.dev/drew/butterbash.git
 cd butterbash
 ```
 
@@ -101,18 +101,18 @@ alias myalias="command"
 ### Integration with Other Projects
 
 ButterBash works seamlessly with other projects in the ButterScripts ecosystem:
-- **[ButterScripts](https://codeberg.org/justaguylinux/butterscripts)** - Comprehensive setup scripts for Debian systems
-- **[ButterNotes](https://codeberg.org/justaguylinux/butternotes)** - Note-taking and todo management extension
+- **[ButterScripts](https://justaguy.dev/drew/butterscripts)** - Comprehensive setup scripts for Debian systems
+- **[ButterNotes](https://justaguy.dev/drew/butternotes)** - Note-taking and todo management extension
 - Integrates with terminal emulators like WezTerm
 - Compatible with window managers (DWM, BSPWM, etc.)
 - Works alongside other development tools and configurations
 
 #### Want Note-Taking and Todo Management?
 
-ButterBash focuses on shell configuration. For productivity features like notes and todos, install **[ButterNotes](https://codeberg.org/justaguylinux/butternotes)**:
+ButterBash focuses on shell configuration. For productivity features like notes and todos, install **[ButterNotes](https://justaguy.dev/drew/butternotes)**:
 
 ```bash
-git clone https://codeberg.org/justaguylinux/butternotes.git
+git clone https://justaguy.dev/drew/butternotes.git
 cd butternotes && ./install.sh
 ```
 
@@ -147,9 +147,9 @@ install_tools  # reinstalls fzf and ripgrep
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please visit our [Codeberg repository](https://codeberg.org/justaguylinux/butterbash) to:
+Contributions are welcome! Please visit our [Butterforge repository](https://justaguy.dev/drew/butterbash) to:
 
-- Report issues: https://codeberg.org/justaguylinux/butterbash/issues
+- Report issues: https://justaguy.dev/drew/butterbash/issues
 - Submit pull requests
 - Join discussions
 
@@ -166,7 +166,7 @@ GPL-2.0 - See [LICENSE](LICENSE) for details.
 ## Connect
 
 - [YouTube](https://youtube.com/@justaguylinux) — tutorials and guides
-- [Codeberg](https://codeberg.org/justaguylinux) — source code and projects
+- [Butterforge](https://justaguy.dev/drew) — source code and projects
 - [The Butter Lab](https://lab.justaguylinux.com) — Discourse forum
 - [The Churn](https://justaguylinux.chat) — community chat (Fluxer)
 - [Wiki](https://justaguy.wiki) — documentation and guides
