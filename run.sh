@@ -50,6 +50,7 @@ fi
 SCRIPTS=(
     "addUserToGroups.sh|Add your user to input/video/render groups (needed for touchpad + GPU accel fixes)|Y"
     "kdeDebloat.sh|Debloat KDE Plasma (games/education/PIM/extras/Kate/Konqueror/Dragon Player) toward a minimal-but-functional install|Y"
+    "usefulApps.sh|Install VLC, TLP (+ ThinkPad battery thresholds), and a few small KDE-completing utilities|Y"
     "catppuccinPlasma.sh|Catppuccin (Mocha, Red accent) Global Theme, icons, Konsole profile — alternative to fancyPlasma.sh's Darkly, pick one|Y"
     "bootThemeSetup.sh|Carry the Catppuccin theme to Plymouth (boot splash), GRUB, and the SDDM login screen|Y"
     "touchpadTrackpointFix.sh|Apply touchpad/trackpoint polling + libinput fixes|Y"
@@ -60,9 +61,7 @@ SCRIPTS=(
     "installFonts.sh|Install Noto, Font Awesome, and JetBrainsMono Nerd Font|Y"
     "terminalButterbash.sh|Install ButterBash for a more functional terminal|Y"
     "fastfetchConfig.sh|Install fastfetch + curated config presets|Y"
-    "usefulApps.sh|Install VLC, TLP (+ ThinkPad battery thresholds), and a few small KDE-completing utilities|Y"
     "desktopEssentials.sh|Set up Flatpak/Discover, PackageKit update notifications, printing, Partition Manager, and the firewall panel|Y"
-    "fancyPlasma.sh|(alternative look) Darkly theme, KWin Blur + Magic Lamp, centered KRunner, glass Konsole profile, panel cleanup|N"
     "timeshiftSetup.sh|Install Timeshift for system snapshots/restore|Y"
     "installPhotogimp.sh|(optional) Install GIMP + PhotoGIMP's Photoshop-like layout/theme|N"
     "installVscodium.sh|(optional) Install VSCodium editor|N"
