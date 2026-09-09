@@ -44,8 +44,10 @@ install_pkgs() {
     log_info "$label: installing ${to_install[*]}"
     if sudo apt-get install -y "${to_install[@]}"; then
         log_ok "$label installed."
+        return 0
     else
         log_warn "$label: some packages failed to install (continuing)."
+        return 1
     fi
 }
 
